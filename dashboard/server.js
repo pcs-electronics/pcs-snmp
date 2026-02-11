@@ -38,7 +38,7 @@ function readBooleanEnv(name, fallback = false) {
 const DEFAULT_CONFIG = {
   ip: (String(process.env.DASHBOARD_DEFAULT_IP || '192.168.1.140').trim() || '192.168.1.140'),
   snmpPort: readIntegerEnv('DASHBOARD_DEFAULT_SNMP_PORT', 161, 1, 65535),
-  intervalSec: readIntegerEnv('DASHBOARD_DEFAULT_POLL_TIME_SEC', 5, 5, 10000),
+  intervalSec: readIntegerEnv('DASHBOARD_DEFAULT_POLL_TIME_SEC', 30, 5, 10000),
 };
 const DASHBOARD_AUTO_START = readBooleanEnv('DASHBOARD_AUTO_START', false);
 
