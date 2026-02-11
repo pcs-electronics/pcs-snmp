@@ -124,4 +124,6 @@ Windows note:
 
 ---
 
-Coded with GPT-Codex
+Coded with GPT-Codex. You can freely modify this program.
+
+![Dashboard Screenshot](dashboard-screenshot.png)
