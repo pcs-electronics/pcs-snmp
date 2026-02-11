@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SNMP Dashboard for the PCS Electronics Transmitter</title>
+  <style>
+    :root {
+      --bg-a: #071926;
+      --bg-b: #0b2231;
+      --card: rgba(255, 255, 255, 0.07);
+      --card-border: rgba(255, 255, 255, 0.14);
+      --text: #f2f7fb;
+      --muted: #b8cad8;
+      --accent: #37d2ff;
+      --accent-2: #39ff9f;
+      --warn: #ffd166;
+      --alarm: #ff6b6b;
+      --ok: #8bffb5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Trebuchet MS", "Lucida Grande", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(55, 210, 255, 0.16), transparent 38%),
+        radial-gradient(circle at 85% 10%, rgba(57, 255, 159, 0.14), transparent 34%),
+        radial-gradient(circle at 50% 90%, rgba(255, 209, 102, 0.14), transparent 45%),
+        linear-gradient(145deg, var(--bg-a), var(--bg-b));
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1200px, 96vw);
+      margin: 20px auto 30px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(1.35rem, 2.7vw, 2rem);
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.38);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(4px);
+      margin-bottom: 12px;
+    }
+
+    .controls label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .controls input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(8, 19, 30, 0.85);
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .controls .btnbox {
+      display: flex;
+      align-items: end;
+      gap: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #052034;
+      background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    }
+
+    button.secondary {
+      background: linear-gradient(120deg, #89a4b8, #c6d5e0);
+      color: #122c3b;
+    }
+
+    button.warn {
+      background: linear-gradient(120deg, #ffd166, #ff9f43);
+      color: #351900;
+    }
+
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: 0.9rem;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 6px 11px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      background: var(--card);
+      padding: 12px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 7px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    .metric-large {
+      grid-column: span 6;
+      padding: 16px;
+      background: linear-gradient(130deg, rgba(55, 210, 255, 0.2), rgba(57, 255, 159, 0.11));
+    }
+
+    .metric-large h2 {
+      margin: 0;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    .metric-value {
+      margin-top: 6px;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0.02em;
+    }
+
+    .metric-sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .graph-card { grid-column: span 12; }
+    .small { grid-column: span 4; }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 6px 8px;
+      font-size: 0.93rem;
+    }
+
+    .kv .k { color: var(--muted); }
+    .kv .v { text-align: right; font-weight: 700; }
+
+    #graph {
+      width: 100%;
+      height: 260px;
+      display: block;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+    #vuGraph {
+      width: 100%;
+      height: 130px;
+      display: block;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .alarm-text { font-weight: 800; color: var(--warn); }
+    .alarm-text.red { color: var(--alarm); }
+    .amp-related { color: #ffd166; font-weight: 700; }
+    .vu-bar {
+      width: 140px;
+      height: 10px;
+      margin-left: auto;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+    .vu-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #39ff9f 0%, #ffd166 60%, #ff6b6b 100%);
+    }
+    .vu-na { color: var(--muted); }
+
+    @media (max-width: 920px) {
+      .controls { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .metric-large { grid-column: span 12; }
+      .small { grid-column: span 12; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>SNMP Dashboard for the PCS Electronics Transmitter</h1>
+
+    <section class="controls">
+      <div>
+        <label for="ip">IP Address</label>
+        <input id="ip" value="192.168.1.140" />
+      </div>
+      <div>
+        <label for="port">SNMP Port</label>
+        <input id="port" type="number" min="1" max="65535" value="161" />
+      </div>
+      <div>
+        <label for="interval">Poll Time (s)</label>
+        <input id="interval" type="number" min="5" max="10000" value="5" />
+      </div>
+      <div class="btnbox">
+        <button id="startBtn">Start</button>
+      </div>
+      <div class="btnbox">
+        <button id="resetLatchedBtn" class="warn">Reset Alarm Latched</button>
+      </div>
+    </section>
+
+    <section class="status">
+      <span class="pill" id="runStatus">Status: Idle</span>
+      <span class="pill" id="lastPoll">Last poll: never</span>
+      <span class="pill" id="lastError">Network error: none</span>
+    </section>
+
+    <section class="grid">
+      <article class="card metric-large">
+        <h2>Frequency</h2>
+        <div class="metric-value" id="freqBig">-</div>
+        <div class="metric-sub" id="freqSub">Carrier frequency</div>
+      </article>
+
+      <article class="card metric-large">
+        <h2>Forward Power</h2>
+        <div class="metric-value" id="fwdBig">-</div>
+        <div class="metric-sub" id="fwdSub">W (0.1 W SNMP units)</div>
+      </article>
+
+      <article class="card graph-card">
+        <h2 style="margin:0 0 8px; font-size: 1rem;">Power History</h2>
+        <canvas id="graph" width="1100" height="260"></canvas>
+      </article>
+
+      <article class="card graph-card">
+        <h2 style="margin:0 0 8px; font-size: 1rem;">VU Peak History</h2>
+        <canvas id="vuGraph" width="1100" height="130"></canvas>
+      </article>
+
+      <article class="card small">
+        <h2 style="margin:0 0 8px; font-size:1rem;">RF & Alarm</h2>
+        <div class="kv" id="rfAlarmKv"></div>
+      </article>
+
+      <article class="card small">
+        <h2 style="margin:0 0 8px; font-size:1rem;">Power Rails</h2>
+        <div class="kv" id="powerKv"></div>
+      </article>
+
+      <article class="card small">
+        <h2 style="margin:0 0 8px; font-size:1rem;">Audio</h2>
+        <div class="kv" id="audioKv"></div>
+      </article>
+    </section>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

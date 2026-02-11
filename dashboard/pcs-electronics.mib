@@ -1,0 +1,288 @@
+PCS-ELECTRONICS-MIB DEFINITIONS ::= BEGIN
+
+-- Quick test examples (replace <ip>):
+-- Standard MIB-II:
+-- snmpget -v2c -c public <ip> 1.3.6.1.2.1.1.7.0
+-- (sysServices.0, expected value: 72)
+--
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.1.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.2.1.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.2.2.0
+-- snmpset -v2c -c private <ip> 1.3.6.1.4.1.65081.1.2.3.0 i <power_percent_0_to_100>
+-- snmpget -v2c -c public  <ip> 1.3.6.1.4.1.65081.1.2.3.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.3.1.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.3.2.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.4.1.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.4.2.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.4.3.0
+-- snmpset -v2c -c private <ip> 1.3.6.1.4.1.65081.1.4.4.0 i <alarm_code_0_to_65535>
+-- snmpget -v2c -c public  <ip> 1.3.6.1.4.1.65081.1.4.4.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.5.1.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.5.2.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.5.3.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.6.1.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.6.2.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.7.1.0
+-- snmpset -v2c -c private <ip> 1.3.6.1.4.1.65081.1.7.2.0 i <gain_dB_0_to_30>
+-- snmpget -v2c -c public  <ip> 1.3.6.1.4.1.65081.1.7.2.0
+-- snmpget -v2c -c public  <ip> 1.3.6.1.4.1.65081.1.7.3.0
+-- snmpget -v2c -c public  <ip> 1.3.6.1.4.1.65081.1.7.4.0
+-- snmpget -v2c -c public <ip> 1.3.6.1.4.1.65081.1.8.1.0
+-- snmpwalk -v2c -c public <ip> 1.3.6.1.4.1.65081
+--
+-- Unit notes:
+-- txForwardPower / txReflectedPower are 0.1 W units (value/10 = watts).
+-- txInternalTemperature / txExternalTemperature are 0.1 degC units (value/10 = degC).
+-- voltages are in 0.1 V units; currents are in 0.1 A units.
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, enterprises, Integer32, Unsigned32
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC;
+
+pcsElectronicsMIB MODULE-IDENTITY
+    LAST-UPDATED "202602090000Z"
+    ORGANIZATION "PCS Elektronik d.o.o."
+    CONTACT-INFO
+        "Marko Seruga
+         E-mail: radio@pcs-electronics.com
+         Web:    https://www.pcs-electronics.com"
+    DESCRIPTION
+        "Private MIB for PCS Electronics transmitter controller telemetry."
+    REVISION "202602090000Z"
+    DESCRIPTION
+        "Initial version generated from firmware source.
+         Note: standard system OIDs (including sysServices.0) are under MIB-II
+         and are intentionally not redefined in this private enterprise MIB."
+    ::= { enterprises 65081 }
+
+pcsProducts      OBJECT IDENTIFIER ::= { pcsElectronicsMIB 1 }
+pcsPower         OBJECT IDENTIFIER ::= { pcsProducts 2 }
+pcsTemperature   OBJECT IDENTIFIER ::= { pcsProducts 3 }
+pcsAlarm         OBJECT IDENTIFIER ::= { pcsProducts 4 }
+pcsVoltage       OBJECT IDENTIFIER ::= { pcsProducts 5 }
+pcsCurrent       OBJECT IDENTIFIER ::= { pcsProducts 6 }
+pcsAudio         OBJECT IDENTIFIER ::= { pcsProducts 7 }
+pcsFrequency     OBJECT IDENTIFIER ::= { pcsProducts 8 }
+
+pcsDeviceObjectId OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Firmware device object-id string. Current value in source:
+         1.3.6.1.4.1.65081.1.1"
+    ::= { pcsProducts 1 }
+
+txForwardPower OBJECT-TYPE
+    SYNTAX      Integer32 (0..1000000)
+    UNITS       "0.1 W"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitter forward/output power from txboard_status.power_forward_w.
+         Value is scaled by 10 (deci-watts)."
+    ::= { pcsPower 1 }
+
+txReflectedPower OBJECT-TYPE
+    SYNTAX      Integer32 (0..1000000)
+    UNITS       "0.1 W"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitter reflected power from txboard_status.power_refl_w.
+         Value is scaled by 10 (deci-watts)."
+    ::= { pcsPower 2 }
+
+txPowerPercent OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    UNITS       "percent"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Power setting from txboard_settings.power_percentage.
+         Value is in 1 percent steps.
+         SNMP SET stores value and marks settings for EEPROM save."
+    ::= { pcsPower 3 }
+
+txInternalTemperature OBJECT-TYPE
+    SYNTAX      Integer32 (-1000..3000)
+    UNITS       "0.1 degC"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Internal transmitter temperature from txboard_status.internal_temperature_c.
+         Reported in 0.1 degrees Celsius."
+    ::= { pcsTemperature 1 }
+
+txExternalTemperature OBJECT-TYPE
+    SYNTAX      Integer32 (-1000..3000)
+    UNITS       "0.1 degC"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "External/PA temperature from txboard_status.external_temperature_c.
+         Reported in 0.1 degrees Celsius."
+    ::= { pcsTemperature 2 }
+
+txAlarmBits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Alarm status bitmask from low 5 bits of txboard_status.alm_st_bits.
+         Bits currently used in firmware:
+         bit0=extTemp, bit1=highSWR, bit2=intTemp, bit3=highCurrent,
+         bit4=highVoltage."
+    ::= { pcsAlarm 1 }
+
+txPAConnected OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Single-bit 0/1 export from bit8 (0x100) of txboard_status.alm_st_bits.
+         1 means bit8 is set; 0 means bit8 is clear."
+    ::= { pcsAlarm 2 }
+
+txAlarmCodeNow OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    noAlarm(0),
+                    extTemp(1),
+                    highSWR(2),
+                    intTemp(3),
+                    highCurrent(4),
+                    highVoltage(5),
+                    noExciter(6)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current alarm code mapped from low-byte bits of txboard_status.alm_st_bits.
+         bit0->1(extTemp), bit1->2(highSWR), bit2->3(intTemp),
+         bit3->4(highCurrent), bit4->5(highVoltage).
+         If no mapped alarm bit is set and txboard_status.read_ok is false
+         while exciter_has_tx() is true, returns 6(noExciter); otherwise 0(noAlarm).
+         If multiple mapped bits are set, the lowest bit index wins."
+    ::= { pcsAlarm 3 }
+
+txAlarmCodeLatched OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    noAlarm(0),
+                    extTemp(1),
+                    highSWR(2),
+                    intTemp(3),
+                    highCurrent(4),
+                    highVoltage(5),
+                    noExciter(6)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Latched alarm code from txboard_status.alm_code_latched.
+         This object is writable and can be reset (for example to 0)."
+    ::= { pcsAlarm 4 }
+
+txExciterVoltage OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000)
+    UNITS       "0.1 V"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Exciter voltage from txboard_status.exciter_voltage_v.
+         Value is scaled by 10 (deci-volts)."
+    ::= { pcsVoltage 1 }
+
+txPAVoltage OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000)
+    UNITS       "0.1 V"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "PA voltage from txboard_status.pa_voltage_v.
+         Value is scaled by 10 (deci-volts)."
+    ::= { pcsVoltage 2 }
+
+txPA2Voltage OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000)
+    UNITS       "0.1 V"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "PA2 voltage from txboard_status.pa2_voltage_v.
+         Value is scaled by 10 (deci-volts)."
+    ::= { pcsVoltage 3 }
+
+txExciterCurrent OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000)
+    UNITS       "0.1 A"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Exciter current from txboard_status.exc_current_a.
+         Value is scaled by 10 (deci-amps)."
+    ::= { pcsCurrent 1 }
+
+txPACurrent OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000)
+    UNITS       "0.1 A"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "PA current from txboard_status.pa_current_a.
+         Value is scaled by 10 (deci-amps)."
+    ::= { pcsCurrent 2 }
+
+txAudioInputSource OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    analogInput(0),
+                    aesEbu(1),
+                    i2s1(2),
+                    i2s2(3)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Current input audio source from lower bits of txboard_settings.audio_input.
+         Bit7 (Stereo Tool flag) is preserved and is not changed by this object.
+         SNMP SET accepts values 0..3."
+    ::= { pcsAudio 1 }
+
+txAudioGain OBJECT-TYPE
+    SYNTAX      Integer32 (0..30)
+    UNITS       "dB"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Audio gain from txboard_settings.audio_gain.
+         Allowed range is 0..30 dB in 1 dB steps.
+         SNMP SET stores the new value and marks settings for EEPROM save."
+    ::= { pcsAudio 2 }
+
+txVULeft OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Raw left-channel VU level from txboard_status.vu_left."
+    ::= { pcsAudio 3 }
+
+txVURight OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Raw right-channel VU level from txboard_status.vu_right."
+    ::= { pcsAudio 4 }
+
+txFrequencykHz OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000000)
+    UNITS       "kHz"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitter frequency in kHz from txboard_settings.fq_mhz."
+    ::= { pcsFrequency 1 }
+
+END
