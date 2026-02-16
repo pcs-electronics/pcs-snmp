@@ -43,6 +43,13 @@ function fmt(value, digits = 1, suffix = '') {
   return `${Number(value).toFixed(digits)}${suffix}`;
 }
 
+function fmtSigned(value, digits = 1, suffix = '') {
+  if (value == null || Number.isNaN(value)) return '-';
+  const n = Number(value);
+  const sign = n >= 0 ? '+' : '-';
+  return `${sign}${Math.abs(n).toFixed(digits)}${suffix}`;
+}
+
 function fmtInt(value) {
   if (value == null || Number.isNaN(value)) return '-';
   return String(Math.round(Number(value)));
@@ -449,8 +456,9 @@ function renderState(s) {
   ]);
 
   setKV(el.audioKv, [
+    ['Stereo channels', d.audio.txStereoChannelsText || '-'],
     ['Input source', d.audio.txAudioInputSourceText || '-'],
-    ['Audio input gain', fmtInt(d.audio.txAudioGaindB) + ' dB'],
+    ['Audio input gain', fmtSigned(d.audio.txAudioGaindB, 1, ' dB')],
     ['VU left', fmtVuBar(d.audio.txVULeft)],
     ['VU right', fmtVuBar(d.audio.txVURight)],
   ]);

@@ -72,6 +72,7 @@ const OIDS = {
   txAudioGain: '1.3.6.1.4.1.65081.1.7.2.0',
   txVULeft: '1.3.6.1.4.1.65081.1.7.3.0',
   txVURight: '1.3.6.1.4.1.65081.1.7.4.0',
+  txStereoChannels: '1.3.6.1.4.1.65081.1.7.5.0',
 
   txFrequencykHz: '1.3.6.1.4.1.65081.1.8.1.0',
 };
@@ -95,6 +96,7 @@ const POLL_ENTRIES = [
   ['txAudioGain', OIDS.txAudioGain],
   ['txVULeft', OIDS.txVULeft],
   ['txVURight', OIDS.txVURight],
+  ['txStereoChannels', OIDS.txStereoChannels],
   ['txInternalTemp', OIDS.txInternalTemp],
   ['txExternalTemp', OIDS.txExternalTemp],
   ['txAlarmBits', OIDS.txAlarmBits],
@@ -262,6 +264,16 @@ function audioSourceToText(source) {
   }
 }
 
+function stereoChannelsToText(mode) {
+  switch (mode) {
+    case 0: return 'MPX left';
+    case 1: return 'MPX right';
+    case 2: return 'Stereo';
+    case 3: return 'Mono left+right';
+    default: return `Unknown mode (${mode})`;
+  }
+}
+
 function decodeValues(values, entries) {
   const map = {};
   entries.forEach(([key], i) => {
@@ -276,7 +288,9 @@ function decodeValues(values, entries) {
 
   const txAlarmCodeNow = parseNumber(map.txAlarmCodeNow);
   const txAlarmCodeLatched = parseNumber(map.txAlarmCodeLatched);
+  const txAudioGain10thdB = parseNumber(map.txAudioGain);
   const txAudioInputSource = parseNumber(map.txAudioInputSource);
+  const txStereoChannels = parseNumber(map.txStereoChannels);
   const sysUpTimeTicks = parseTimeTicks(map.sysUpTime);
 
   return {
@@ -324,9 +338,12 @@ function decodeValues(values, entries) {
       txPACurrentA: parseNumber(map.txPACurrent) == null ? null : parseNumber(map.txPACurrent) / 10,
     },
     audio: {
+      txStereoChannels,
+      txStereoChannelsText: stereoChannelsToText(txStereoChannels),
       txAudioInputSource,
       txAudioInputSourceText: audioSourceToText(txAudioInputSource),
-      txAudioGaindB: parseNumber(map.txAudioGain),
+      txAudioGain10thdB,
+      txAudioGaindB: txAudioGain10thdB == null ? null : txAudioGain10thdB / 10,
       txVULeft: parseNumber(map.txVULeft),
       txVURight: parseNumber(map.txVURight),
     },
