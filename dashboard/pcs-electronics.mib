@@ -248,8 +248,9 @@ txAudioInputSource OBJECT-TYPE
     MAX-ACCESS  read-write
     STATUS      current
     DESCRIPTION
-        "Current input audio source from lower bits of txboard_settings.audio_input.
-         Bit7 (Stereo Tool flag) is preserved and is not changed by this object.
+        "Current input audio source from bits0..1 of txboard_settings.audio_input.
+         Bit6 (bypass DC blocking filter) and bit7 (Stereo Tool flag) are preserved
+         and are not changed by this object.
          SNMP SET accepts values 0..3."
     ::= { pcsAudio 1 }
 
